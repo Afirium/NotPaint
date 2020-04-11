@@ -58,17 +58,16 @@ class Oval(Shape):
 
 class Line(Shape):
     def shape_create(self, event):
+        c.delete(self.id)
+        self.id = c.create_line(self.x1, self.y1,
+                                event.x, event.y)
         c.bind('<ButtonRelease-1>', self.shape_create_end)
-
-    def shape_create_start(self, event):
-        self.x1 = event.x
-        self.y1 = event.y
 
     def shape_create_end(self, event):
         self.x2 = event.x
         self.y2 = event.y
-        c.create_line(self.x1, self.y1, self.x2, self.y2)
-        c.bind('<ButtonRelease-1>', c.unbind_all(event))
+        c.create_line(self.x1, self.y1,
+                      self.x2, self.y2)
 
 
 def draw_rectangle(event):
