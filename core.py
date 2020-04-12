@@ -162,6 +162,26 @@ def select_move(event):
     c.bind('<B1-Motion>', m.move2)
 
 
+def context_menu(event):
+    if c.find_withtag(CURRENT):
+        menu_context.post(event.x_root, event.y_root)
+
+
+def upper_layer():
+    obj = c.find_withtag(CURRENT)
+    c.tag_raise(obj)
+
+
+def bottom_layer():
+    obj = c.find_withtag(CURRENT)
+    c.tag_lower(obj)
+
+
+def remove_item():
+    obj = c.find_withtag(CURRENT)
+    c.delete(obj)
+
+
 # Parameters for TKinter
 
 main = Tk()
@@ -173,3 +193,16 @@ canvas_height = 750
 canvas_color = '#b8bfc2'
 c = PatchedCanvas(main, bg=canvas_color, borderwidth=0, highlightthickness=0)
 c.pack(expand=1, fill=BOTH)
+
+remove_icon = PhotoImage(file='./icons/remove.png')
+up_icon = PhotoImage(file='./icons/up_layer.png')
+down_icon = PhotoImage(file='./icons/bottom_layer.png')
+menu_context = Menu(tearoff=0)
+
+menu_context.add_command(label="Upper layer", image=up_icon,
+                         compound='left', command=upper_layer)
+menu_context.add_command(label="Remove", image=remove_icon, compound='left',
+                         command=remove_item)
+menu_context.add_command(label="Bottom layer", image=down_icon, compound='left',
+                         command=bottom_layer)
+c.bind("<Button-3>", context_menu)
