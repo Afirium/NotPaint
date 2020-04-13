@@ -153,10 +153,14 @@ def draw_line(event):
     c.bind('<B1-Motion>', l.shape_create)
 
 
-def select_move(event):
+def unbind_all_custom():
     c.unbind('<Button-1>')
     c.unbind('<ButtonRelease-1>')
     c.unbind('<B1-Motion>')
+
+
+def select_move(event):
+    unbind_all_custom()
     m = Move()
     c.bind('<Button-1>', m.move1)
     c.bind('<B1-Motion>', m.move2)
@@ -167,31 +171,51 @@ def context_menu(event):
         menu_context.post(event.x_root, event.y_root)
 
 
-def upper_layer():
-    obj = c.find_withtag(CURRENT)
-    c.tag_raise(obj)
-
-
-def bottom_layer():
+def bottom_layer(event):
     obj = c.find_withtag(CURRENT)
     c.tag_lower(obj)
 
 
-def remove_item():
+def select_bottom_layer(event):
+    unbind_all_custom()
+    c.bind('<Button-1>', bottom_layer)
+
+
+def upper_layer(event):
+    obj = c.find_withtag(CURRENT)
+    c.tag_raise(obj)
+
+
+def select_upper_layer(event):
+    unbind_all_custom()
+    c.bind('<Button-1>', upper_layer)
+
+
+def remove_item(event):
+    c.update_idletasks()
     obj = c.find_withtag(CURRENT)
     c.delete(obj)
 
 
-# Parameters for TKinter
+def select_remove_item(event):
+    unbind_all_custom()
+    c.bind('<Button-1>', remove_item)
 
+
+# Parameters for TKinter
 main = Tk()
 main.geometry('1500x750')
 main.title('NotPaint')
 main.iconbitmap('./icons/window_ico.ico')
+
+left_frame = Frame(main)
+left_frame.pack(side=LEFT, expand=1, fill=BOTH)
+
 canvas_width = 1130
 canvas_height = 750
 canvas_color = '#b8bfc2'
-c = PatchedCanvas(main, bg=canvas_color, borderwidth=0, highlightthickness=0)
+c = PatchedCanvas(left_frame, bg=canvas_color, borderwidth=0,
+                  highlightthickness=0)
 c.pack(expand=1, fill=BOTH)
 
 remove_icon = PhotoImage(file='./icons/remove.png')
@@ -205,4 +229,5 @@ menu_context.add_command(label="Remove", image=remove_icon, compound='left',
                          command=remove_item)
 menu_context.add_command(label="Bottom layer", image=down_icon, compound='left',
                          command=bottom_layer)
+
 c.bind("<Button-3>", context_menu)
