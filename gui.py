@@ -1,6 +1,6 @@
 from tkinter import *
 from core import main, draw_rectangle, draw_oval, draw_line, select_move, \
-    select_bottom_layer, select_remove_item, select_upper_layer
+    select_bottom_layer, select_remove_item, select_upper_layer, select_pointer
 
 # Frame
 f_bottom = Frame(main)
@@ -9,8 +9,6 @@ f_bottom_2 = Frame(main)
 f_bottom_2.pack(side=BOTTOM)
 f_bottom_3 = Frame(main)
 f_bottom_3.pack(side=BOTTOM)
-f_top = Frame(main)
-f_top.pack(side=TOP)
 
 # Tools buttons
 rect_icon = PhotoImage(file='./icons/ractangle.png')
@@ -67,7 +65,7 @@ pointer_btn = Button(f_bottom_3, bg='white', height=50, width=50,
                      fg='black',
                      image=pointer_icon, compound=TOP)
 pointer_btn.pack(expand=NO, fill=NONE, side=LEFT)
-pointer_btn.bind('<Button-1>', select_remove_item)
+pointer_btn.bind('<Button-1>', select_pointer)
 
 rotate_icon = PhotoImage(file='./icons/rotate.png')
 rotate_btn = Button(f_bottom_3, bg='white', height=50, width=50,

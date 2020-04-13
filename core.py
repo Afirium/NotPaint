@@ -44,7 +44,7 @@ class Rectanle(Shape):
         c.delete(self.id)
         self.id = c.create_rectangle(self.x1, self.y1,
                                      event.x, event.y,
-                                     fill='white')
+                                     fill='green')
         c.bind('<ButtonRelease-1>', self.shape_create_end)
 
     def shape_create_end(self, event):
@@ -53,7 +53,7 @@ class Rectanle(Shape):
         c.delete(self.id)
         c.create_rectangle(self.x1, self.y1,
                            self.x2, self.y2,
-                           fill='white')
+                           fill='green')
 
 
 class Oval(Shape):
@@ -202,6 +202,33 @@ def select_remove_item(event):
     c.bind('<Button-1>', remove_item)
 
 
+item_by_pointer = [0]
+
+
+def pointer_set_item(event):
+    item_by_pointer[0] = c.find_withtag(CURRENT)
+    txt_width.delete(0, END)
+    txt_width.insert(0, c.itemcget(item_by_pointer, 'width'))
+    txt_color.delete(0, END)
+    txt_color.insert(0, c.itemcget(item_by_pointer, 'fill'))
+    return item_by_pointer
+
+
+def select_pointer(event):
+    unbind_all_custom()
+    c.bind('<Button-1>', pointer_set_item)
+
+
+def select_set_all(event):
+    print('HELLLO')
+    # print(txt_color.get())
+    print(item_by_pointer)
+    c.itemconfigure(item_by_pointer[0], width=txt_width.get(),
+                    fill=txt_color.get())
+    if txt_opacity.get() == '0':
+        c.itemconfig(item_by_pointer[0], fill='')
+
+
 # Parameters for TKinter
 main = Tk()
 main.geometry('1500x750')
@@ -231,3 +258,32 @@ menu_context.add_command(label="Bottom layer", image=down_icon, compound='left',
                          command=bottom_layer)
 
 c.bind("<Button-3>", context_menu)
+
+# Information frame
+
+f_top = Frame(main)
+f_top.pack(side=TOP)
+
+lb_width = Label(f_top, text='Border width')
+lb_width.pack(expand=1, fill=X)
+txt_width = Entry(f_top, justify=CENTER)
+txt_width.pack(expand=1, fill=X)
+
+lb_opacity = Label(f_top, text='Opacity')
+lb_opacity.pack(expand=1, fill=X)
+txt_opacity = Entry(f_top, justify=CENTER)
+txt_opacity.pack(expand=1, fill=X)
+
+lb_rotate = Label(f_top, text='Rotate angle')
+lb_rotate.pack(expand=1, fill=X)
+txt_rotate = Entry(f_top, justify=CENTER)
+txt_rotate.pack(expand=1, fill=X)
+
+lb_color = Label(f_top, text='Color')
+lb_color.pack(expand=1, fill=X)
+txt_color = Entry(f_top, justify=CENTER)
+txt_color.pack(expand=1, fill=X)
+
+btn_set_all = Button(f_top, bg='white', width=30, text='Apply')
+btn_set_all.pack(expand=1, fill=X, pady=20)
+btn_set_all.bind('<Button-1>', select_set_all)
