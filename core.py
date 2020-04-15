@@ -202,16 +202,36 @@ def select_remove_item(event):
     c.bind('<Button-1>', remove_item)
 
 
-item_by_pointer = [0]
+item_by_pointer = [0, 0, 0]
+
+
+def clear_txtbox():
+    txt_color.delete(0, END)
+    txt_width.delete(0, END)
+    txt_opacity.delete(0, END)
+    txt_rotate.delete(0, END)
+    txt_shape_width.delete(0, END)
+    txt_shape_height.delete(0, END)
 
 
 def pointer_set_item(event):
-    item_by_pointer[0] = c.find_withtag(CURRENT)
-    txt_width.delete(0, END)
-    txt_width.insert(0, c.itemcget(item_by_pointer, 'width'))
-    txt_color.delete(0, END)
-    txt_color.insert(0, c.itemcget(item_by_pointer, 'fill'))
-    return item_by_pointer
+    if c.find_withtag(CURRENT):
+        item_by_pointer[0] = c.find_withtag(CURRENT)
+
+        clear_txtbox()
+        txt_width.insert(0, c.itemcget(item_by_pointer[0], 'width'))
+        txt_color.insert(0, c.itemcget(item_by_pointer[0], 'fill'))
+        txt_opacity.insert(0, 1)
+
+        crd = c.coords(item_by_pointer[0])
+        txt_shape_width.insert(0, crd[2] - crd[0])
+        txt_shape_height.insert(0, crd[3] - crd[1])
+        item_by_pointer[1] = crd[2] - crd[0]
+        item_by_pointer[2] = crd[3] - crd[1]
+
+        return item_by_pointer
+    else:
+        clear_txtbox()
 
 
 def select_pointer(event):
@@ -220,9 +240,17 @@ def select_pointer(event):
 
 
 def select_set_all(event):
-    print('HELLLO')
-    # print(txt_color.get())
-    print(item_by_pointer)
+    if txt_shape_width.get() != '' and txt_shape_height.get() != '' and float(
+            txt_shape_width.get()) >= 0 and float(txt_shape_height.get()) >= 0:
+        crd = c.coords(item_by_pointer[0])
+
+        width_coord = float(txt_shape_width.get()) - item_by_pointer[1]
+        height_coord = float(txt_shape_height.get()) - item_by_pointer[2]
+        item_by_pointer[1] = float(txt_shape_width.get())
+        item_by_pointer[2] = float(txt_shape_height.get())
+
+        c.coords(item_by_pointer[0], crd[0], crd[1],
+                 crd[2] + width_coord, crd[3] + height_coord)
     c.itemconfigure(item_by_pointer[0], width=txt_width.get(),
                     fill=txt_color.get())
     if txt_opacity.get() == '0':
@@ -283,6 +311,16 @@ lb_color = Label(f_top, text='Color')
 lb_color.pack(expand=1, fill=X)
 txt_color = Entry(f_top, justify=CENTER)
 txt_color.pack(expand=1, fill=X)
+
+lb_shape_width = Label(f_top, text='Width')
+lb_shape_width.pack(expand=1, fill=X)
+txt_shape_width = Entry(f_top, justify=CENTER)
+txt_shape_width.pack(expand=1, fill=X)
+
+lb_shape_height = Label(f_top, text='Heigth')
+lb_shape_height.pack(expand=1, fill=X)
+txt_shape_height = Entry(f_top, justify=CENTER)
+txt_shape_height.pack(expand=1, fill=X)
 
 btn_set_all = Button(f_top, bg='white', width=30, text='Apply')
 btn_set_all.pack(expand=1, fill=X, pady=20)
