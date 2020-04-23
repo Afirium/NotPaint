@@ -1,4 +1,8 @@
 from tkinter import *
+from tkinter import ttk
+from tkinter.ttk import Treeview
+import PIL.Image
+from PIL import ImageGrab
 
 
 class PatchedCanvas(Canvas):
@@ -93,46 +97,90 @@ b = [1]
 k = [0, 0]
 
 
+#
+# class Move:
+#     def __init__(self):
+#         self.x1 = 0
+#         self.x2 = 0
+#         self.y1 = 0
+#         self.y2 = 0
+#         self.select = 0
+#
+#     def move1(self, event):
+#         self.x1 = event.x
+#         self.y1 = event.y
+#         self.select = c.find_withtag(CURRENT)
+#
+#     def move2(self, event):
+#         if b[0] == 1:
+#             # print(c.gettags(self.select))
+#             if 'group' in c.gettags(self.select):
+#                 c.move('group', event.x - last_coords[0], event.y - last_coords[1])
+#                 last_coords[0] = event.x
+#                 last_coords[1] = event.y
+#             else:
+#                 c.update_idletasks()
+#                 b[0] = 3
+#                 k[0] = event.x
+#                 k[1] = event.y
+#                 dx = event.x - self.x1
+#                 dy = event.y - self.y1
+#                 c.move(self.select, dx, dy)
+#
+#         if b[0] == 3:
+#             if 'group' in c.gettags(self.select):
+#                 c.move('group', event.x - last_coords[0], event.y - last_coords[1])
+#                 last_coords[0] = event.x
+#                 last_coords[1] = event.y
+#             else:
+#                 c.update_idletasks()
+#                 dx = event.x - k[0]
+#                 dy = event.y - k[1]
+#                 c.move(self.select, dx, dy)
+#                 k[0] = event.x
+#                 k[1] = event.y
+#         c.bind('<ButtonRelease-1>', self.move3)
+#
+#     def move3(self, event):
+#         if 'group' in c.gettags(self.select):
+#             last_coords[0] = event.x
+#             last_coords[1] = event.y
+#         else:
+#             self.x2 = event.x
+#             self.y2 = event.y
+#             dx = self.x2 - k[0]
+#             dy = self.y2 - k[1]
+#
+#             b[0] = 1
+#             k[0] = k[1] = 0
 class Move:
     def __init__(self):
         self.x1 = 0
-        self.x2 = 0
         self.y1 = 0
+        self.x2 = 0
         self.y2 = 0
-        self.select = 0
 
-    def move1(self, event):
-        self.x1 = event.x
-        self.y1 = event.y
-        self.select = c.find_withtag(CURRENT)
+    def first_click(self, event):
+        # if current_group[0] in c.gettags(c.find_withtag(CURRENT)):
+        if c.gettags(c.find_withtag(CURRENT))[0] in treeview.get_children():
+            self.x2 = event.x
+            self.y2 = event.y
+        else:
+            self.x1 = event.x
+            self.y1 = event.y
 
-    def move2(self, event):
-        if b[0] == 1:
-            c.update_idletasks()
-            b[0] = 3
-            k[0] = event.x
-            k[1] = event.y
-            dx = event.x - self.x1
-            dy = event.y - self.y1
-            c.move(self.select, dx, dy)
-
-        if b[0] == 3:
-            c.update_idletasks()
-            dx = event.x - k[0]
-            dy = event.y - k[1]
-            c.move(self.select, dx, dy)
-            k[0] = event.x
-            k[1] = event.y
-        c.bind('<ButtonRelease-1>', self.move3)
-
-    def move3(self, event):
-        self.x2 = event.x
-        self.y2 = event.y
-        dx = self.x2 - k[0]
-        dy = self.y2 - k[1]
-
-        b[0] = 1
-        k[0] = k[1] = 0
+    def move_motion(self, event):
+        # if current_group[0] in c.gettags(c.find_withtag(CURRENT)):
+        print(c.gettags(c.find_withtag(CURRENT)))
+        if c.gettags(c.find_withtag(CURRENT))[0] in treeview.get_children():
+            c.move(c.gettags(c.find_withtag(CURRENT))[0], event.x - self.x2,
+                   event.y - self.y2)
+            self.x2 = event.x
+            self.y2 = event.y
+        else:
+            c.move('current', event.x - self.x1, event.y - self.y1)
+            self.x1 = event.x
+            self.y1 = event.y
 
 
 def draw_rectangle(event):
@@ -162,8 +210,8 @@ def unbind_all_custom():
 def select_move(event):
     unbind_all_custom()
     m = Move()
-    c.bind('<Button-1>', m.move1)
-    c.bind('<B1-Motion>', m.move2)
+    c.bind('<Button-1>', m.first_click)
+    c.bind('<B1-Motion>', m.move_motion)
 
 
 def context_menu(event):
@@ -202,6 +250,32 @@ def select_remove_item(event):
     c.bind('<Button-1>', remove_item)
 
 
+last_coords = [0, 0]
+
+
+def group_move(event):
+    c.move('group', event.x - last_coords[0], event.y - last_coords[1])
+    last_coords[0] = event.x
+    last_coords[1] = event.y
+
+
+def group_items(event):
+    item = c.find_withtag(CURRENT)
+    if item:
+        c.addtag_withtag(current_group[0], CURRENT)
+        treeview.insert(current_group[0], END, item, text=item)
+        # working without
+    last_coords[0] = event.x
+    last_coords[1] = event.y
+    print(c.gettags(item))
+
+
+def select_group(event):
+    unbind_all_custom()
+    c.bind('<Button-1>', group_items)
+    c.bind('<B1-Motion>', group_move)
+
+
 item_by_pointer = [0, 0, 0]
 
 
@@ -209,7 +283,6 @@ def clear_txtbox():
     txt_color.delete(0, END)
     txt_width.delete(0, END)
     txt_opacity.delete(0, END)
-    txt_rotate.delete(0, END)
     txt_shape_width.delete(0, END)
     txt_shape_height.delete(0, END)
 
@@ -239,7 +312,17 @@ def select_pointer(event):
     c.bind('<Button-1>', pointer_set_item)
 
 
+current_group = [None]
+
+
 def select_set_all(event):
+    # print(c.itemconfig(c.find_all()[0]))
+
+    if txt_group.get() != '' and txt_group.get() not in treeview.get_children():
+        current_group[0] = txt_group.get()
+        treeview.insert('', END, current_group, text=current_group)
+        txt_group.delete(0, END)
+
     if txt_shape_width.get() != '' and txt_shape_height.get() != '' and float(
             txt_shape_width.get()) >= 0 and float(txt_shape_height.get()) >= 0:
         crd = c.coords(item_by_pointer[0])
@@ -257,20 +340,31 @@ def select_set_all(event):
         c.itemconfig(item_by_pointer[0], fill='')
 
 
+def save_as_image():
+    x = main.winfo_rootx() + c.winfo_x()
+    y = main.winfo_rooty() + c.winfo_y()
+    xx = x + c.winfo_width()
+    yy = y + c.winfo_height()
+    ImageGrab.grab(bbox=(x, y, xx, yy)).save("test.png")
+
+
 # Parameters for TKinter
+
 main = Tk()
-main.geometry('1500x750')
+main.geometry('1500x850')
 main.title('NotPaint')
 main.iconbitmap('./icons/window_ico.ico')
+main.configure(bg='#ffd1dc')
 
 left_frame = Frame(main)
 left_frame.pack(side=LEFT, expand=1, fill=BOTH)
 
 canvas_width = 1130
 canvas_height = 750
-canvas_color = '#b8bfc2'
-c = PatchedCanvas(left_frame, bg=canvas_color, borderwidth=0,
-                  highlightthickness=0)
+# canvas_color = '#b8bfc2'
+canvas_color = 'white'
+c = Canvas(left_frame, bg=canvas_color, borderwidth=0,
+           highlightthickness=0)
 c.pack(expand=1, fill=BOTH)
 
 remove_icon = PhotoImage(file='./icons/remove.png')
@@ -288,40 +382,46 @@ menu_context.add_command(label="Bottom layer", image=down_icon, compound='left',
 c.bind("<Button-3>", context_menu)
 
 # Information frame
-
-f_top = Frame(main)
+f_top = Frame(main, bg='#ffd1dc')
 f_top.pack(side=TOP)
 
-lb_width = Label(f_top, text='Border width')
+lb_width = Label(f_top, text='Border width', bg='#ffd1dc',
+                 font='Helvetica 10 bold')
 lb_width.pack(expand=1, fill=X)
-txt_width = Entry(f_top, justify=CENTER)
-txt_width.pack(expand=1, fill=X)
+txt_width = Entry(f_top, justify=CENTER, relief=GROOVE, font='Helvetica 10')
+txt_width.pack(expand=1, fill=X, pady=5)
 
-lb_opacity = Label(f_top, text='Opacity')
+lb_opacity = Label(f_top, text='Opacity', bg='#ffd1dc',
+                   font='Helvetica 10 bold')
 lb_opacity.pack(expand=1, fill=X)
-txt_opacity = Entry(f_top, justify=CENTER)
-txt_opacity.pack(expand=1, fill=X)
+txt_opacity = Entry(f_top, justify=CENTER, relief=GROOVE, font='Helvetica 10')
+txt_opacity.pack(expand=1, fill=X, pady=5)
 
-lb_rotate = Label(f_top, text='Rotate angle')
-lb_rotate.pack(expand=1, fill=X)
-txt_rotate = Entry(f_top, justify=CENTER)
-txt_rotate.pack(expand=1, fill=X)
-
-lb_color = Label(f_top, text='Color')
+lb_color = Label(f_top, text='Color', bg='#ffd1dc', font='Helvetica 10 bold')
 lb_color.pack(expand=1, fill=X)
-txt_color = Entry(f_top, justify=CENTER)
-txt_color.pack(expand=1, fill=X)
+txt_color = Entry(f_top, justify=CENTER, relief=GROOVE, font='Helvetica 10')
+txt_color.pack(expand=1, fill=X, pady=5)
 
-lb_shape_width = Label(f_top, text='Width')
+lb_shape_width = Label(f_top, text='Width', bg='#ffd1dc',
+                       font='Helvetica 10 bold')
 lb_shape_width.pack(expand=1, fill=X)
-txt_shape_width = Entry(f_top, justify=CENTER)
-txt_shape_width.pack(expand=1, fill=X)
+txt_shape_width = Entry(f_top, justify=CENTER, relief=GROOVE,
+                        font='Helvetica 10')
+txt_shape_width.pack(expand=1, fill=X, pady=5)
 
-lb_shape_height = Label(f_top, text='Heigth')
+lb_shape_height = Label(f_top, text='Heigth', bg='#ffd1dc',
+                        font='Helvetica 10 bold')
 lb_shape_height.pack(expand=1, fill=X)
-txt_shape_height = Entry(f_top, justify=CENTER)
-txt_shape_height.pack(expand=1, fill=X)
+txt_shape_height = Entry(f_top, justify=CENTER, relief=GROOVE,
+                         font='Helvetica 10')
+txt_shape_height.pack(expand=1, fill=X, pady=5)
 
-btn_set_all = Button(f_top, bg='white', width=30, text='Apply')
-btn_set_all.pack(expand=1, fill=X, pady=20)
-btn_set_all.bind('<Button-1>', select_set_all)
+# Tree View
+lb_group = Label(f_top, text='New group', bg='#ffd1dc',
+                 font='Helvetica 10 bold')
+lb_group.pack(expand=1, fill=X)
+
+txt_group = Entry(f_top, justify=CENTER, relief=GROOVE, font='Helvetica 10')
+txt_group.pack(expand=1, fill=X)
+treeview = Treeview(f_top)
+treeview.pack(expand=1, fill=X)
