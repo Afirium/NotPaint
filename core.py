@@ -5,21 +5,6 @@ import PIL.Image
 from PIL import ImageGrab
 
 
-class PatchedCanvas(Canvas):
-    def unbind(self, sequence, funcid=None):
-        """Unbind for this widget for event SEQUENCE  the
-            function identified with FUNCID."""
-        if not funcid:
-            self.tk.call('bind', self._w, sequence, '')
-            return
-        func_callbacks = self.tk.call('bind', self._w, sequence, None).split(
-            '\n')
-        new_callbacks = [l for l in func_callbacks if
-                         l[6:6 + len(funcid)] != funcid]
-        self.tk.call('bind', self._w, sequence, '\n'.join(new_callbacks))
-        self.deletecommand(funcid)
-
-
 # Primitives
 
 class Shape:
@@ -97,62 +82,6 @@ b = [1]
 k = [0, 0]
 
 
-#
-# class Move:
-#     def __init__(self):
-#         self.x1 = 0
-#         self.x2 = 0
-#         self.y1 = 0
-#         self.y2 = 0
-#         self.select = 0
-#
-#     def move1(self, event):
-#         self.x1 = event.x
-#         self.y1 = event.y
-#         self.select = c.find_withtag(CURRENT)
-#
-#     def move2(self, event):
-#         if b[0] == 1:
-#             # print(c.gettags(self.select))
-#             if 'group' in c.gettags(self.select):
-#                 c.move('group', event.x - last_coords[0], event.y - last_coords[1])
-#                 last_coords[0] = event.x
-#                 last_coords[1] = event.y
-#             else:
-#                 c.update_idletasks()
-#                 b[0] = 3
-#                 k[0] = event.x
-#                 k[1] = event.y
-#                 dx = event.x - self.x1
-#                 dy = event.y - self.y1
-#                 c.move(self.select, dx, dy)
-#
-#         if b[0] == 3:
-#             if 'group' in c.gettags(self.select):
-#                 c.move('group', event.x - last_coords[0], event.y - last_coords[1])
-#                 last_coords[0] = event.x
-#                 last_coords[1] = event.y
-#             else:
-#                 c.update_idletasks()
-#                 dx = event.x - k[0]
-#                 dy = event.y - k[1]
-#                 c.move(self.select, dx, dy)
-#                 k[0] = event.x
-#                 k[1] = event.y
-#         c.bind('<ButtonRelease-1>', self.move3)
-#
-#     def move3(self, event):
-#         if 'group' in c.gettags(self.select):
-#             last_coords[0] = event.x
-#             last_coords[1] = event.y
-#         else:
-#             self.x2 = event.x
-#             self.y2 = event.y
-#             dx = self.x2 - k[0]
-#             dy = self.y2 - k[1]
-#
-#             b[0] = 1
-#             k[0] = k[1] = 0
 class Move:
     def __init__(self):
         self.x1 = 0
@@ -262,8 +191,10 @@ def group_move(event):
 def group_items(event):
     item = c.find_withtag(CURRENT)
     if item:
+        print(c.type(item), item)
         c.addtag_withtag(current_group[0], CURRENT)
-        treeview.insert(current_group[0], END, item, text=item)
+        treeview.insert(current_group[0], END, item,
+                        text=(c.type(item), str(item[0])))
         # working without
     last_coords[0] = event.x
     last_coords[1] = event.y
@@ -290,6 +221,8 @@ def clear_txtbox():
 def pointer_set_item(event):
     if c.find_withtag(CURRENT):
         item_by_pointer[0] = c.find_withtag(CURRENT)
+
+        print(c.type(item_by_pointer[0]))
 
         clear_txtbox()
         txt_width.insert(0, c.itemcget(item_by_pointer[0], 'width'))
@@ -318,7 +251,7 @@ current_group = [None]
 def select_set_all(event):
     # print(c.itemconfig(c.find_all()[0]))
 
-    if txt_group.get() != '' and txt_group.get() not in treeview.get_children():
+    if txt_group.get() != '' and txt_group.get() not in treeview.get_children() and not txt_group.get().isnumeric():
         current_group[0] = txt_group.get()
         treeview.insert('', END, current_group, text=current_group)
         txt_group.delete(0, END)
@@ -348,6 +281,23 @@ def save_as_image():
     ImageGrab.grab(bbox=(x, y, xx, yy)).save("test.png")
 
 
+def select_group_from_tree(event):
+    item = treeview.identify('item', event.x, event.y)
+    if treeview.parent(item) == '':
+        # print("owner", treeview.item(item, "parent"))
+        current_group[0] = str(item)
+        # print("you clicked on", treeview.item(item, "text"))
+    elif treeview.parent(item):
+        print(treeview.item(item, "text").split(' ')[1])
+        c.select_item()
+
+
+def delete_group_from_tree(event):
+    item = treeview.identify('item', event.x, event.y)
+    if item and item != current_group[0]:
+        treeview.delete(item)
+
+
 # Parameters for TKinter
 
 main = Tk()
@@ -362,7 +312,7 @@ left_frame.pack(side=LEFT, expand=1, fill=BOTH)
 canvas_width = 1130
 canvas_height = 750
 # canvas_color = '#b8bfc2'
-canvas_color = 'white'
+canvas_color = '#b8bfc2'
 c = Canvas(left_frame, bg=canvas_color, borderwidth=0,
            highlightthickness=0)
 c.pack(expand=1, fill=BOTH)
@@ -425,3 +375,6 @@ txt_group = Entry(f_top, justify=CENTER, relief=GROOVE, font='Helvetica 10')
 txt_group.pack(expand=1, fill=X)
 treeview = Treeview(f_top)
 treeview.pack(expand=1, fill=X)
+
+treeview.bind("<Button-1>", select_group_from_tree)
+treeview.bind("<Button-2>", delete_group_from_tree)

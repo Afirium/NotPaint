@@ -1,5 +1,4 @@
 from tkinter import *
-
 from core import main, draw_rectangle, draw_oval, draw_line, select_move, \
     select_bottom_layer, select_remove_item, select_upper_layer, select_pointer, \
     select_group, f_top, select_set_all, save_as_image
@@ -76,7 +75,8 @@ group_btn = Button(f_bottom_3, bg='white', height=50, width=50,
 group_btn.pack(expand=NO, fill=NONE, side=LEFT)
 group_btn.bind('<Button-1>', select_group)
 
-btn_set_all = Button(f_top, bg='white', width=25, text='Apply', relief=GROOVE, font='Helvetica 10 bold')
+btn_set_all = Button(f_top, bg='white', width=25, text='Apply', relief=GROOVE,
+                     font='Helvetica 10 bold')
 btn_set_all.pack(expand=1, fill=X, pady=20)
 btn_set_all.bind('<Button-1>', select_set_all)
 
