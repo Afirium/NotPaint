@@ -1,7 +1,6 @@
 from tkinter import *
-from tkinter import ttk
+from tkinter import ttk, messagebox
 from tkinter.ttk import Treeview
-import PIL.Image
 from PIL import ImageGrab
 
 
@@ -179,32 +178,20 @@ def select_remove_item(event):
     c.bind('<Button-1>', remove_item)
 
 
-last_coords = [0, 0]
-
-
-def group_move(event):
-    c.move('group', event.x - last_coords[0], event.y - last_coords[1])
-    last_coords[0] = event.x
-    last_coords[1] = event.y
-
-
 def group_items(event):
     item = c.find_withtag(CURRENT)
-    if item:
+    if item and current_group[0] is not None:
         print(c.type(item), item)
         c.addtag_withtag(current_group[0], CURRENT)
         treeview.insert(current_group[0], END, item,
                         text=(c.type(item), str(item[0])))
-        # working without
-    last_coords[0] = event.x
-    last_coords[1] = event.y
-    print(c.gettags(item))
+    else:
+        messagebox.showinfo('Error', 'Choose or add a group')
 
 
 def select_group(event):
     unbind_all_custom()
     c.bind('<Button-1>', group_items)
-    c.bind('<B1-Motion>', group_move)
 
 
 item_by_pointer = [0, 0, 0]
@@ -282,20 +269,23 @@ def save_as_image():
 
 
 def select_group_from_tree(event):
-    item = treeview.identify('item', event.x, event.y)
-    if treeview.parent(item) == '':
-        # print("owner", treeview.item(item, "parent"))
-        current_group[0] = str(item)
-        # print("you clicked on", treeview.item(item, "text"))
-    elif treeview.parent(item):
-        print(treeview.item(item, "text").split(' ')[1])
-        c.select_item()
+    t_item = treeview.identify('item', event.x, event.y)
+    if treeview.parent(t_item) == '':
+        current_group[0] = str(t_item)
 
 
 def delete_group_from_tree(event):
-    item = treeview.identify('item', event.x, event.y)
-    if item and item != current_group[0]:
-        treeview.delete(item)
+    t_item = treeview.identify('item', event.x, event.y)
+
+    current_group[0] = None
+    if t_item and treeview.parent(t_item) == '':
+        for i in treeview.get_children(t_item):
+            treeview.delete(i)
+        treeview.delete(t_item)
+    elif t_item and treeview.parent(t_item) != '':
+        shape = c.find_withtag(treeview.item(t_item, "text").split(' ')[1])
+        c.dtag(shape, treeview.parent(t_item))
+        treeview.delete(treeview.item(t_item, "text").split(' ')[1])
 
 
 # Parameters for TKinter
