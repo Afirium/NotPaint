@@ -1,6 +1,6 @@
 from tkinter import *
 from tkinter import ttk, messagebox
-from tkinter.ttk import Treeview
+from tkinter.ttk import Treeview, Combobox
 from PIL import ImageGrab
 
 
@@ -170,6 +170,13 @@ def select_upper_layer(event):
 def remove_item(event):
     c.update_idletasks()
     obj = c.find_withtag(CURRENT)
+    if item_by_pointer[0] == obj:
+        item_by_pointer[0] = None
+    for t_item in treeview.get_children():
+        for shape in treeview.get_children(t_item):
+            if c.find_withtag(shape) == obj:
+                c.dtag(shape, treeview.parent(t_item))
+                treeview.delete(shape)
     c.delete(obj)
 
 
@@ -237,8 +244,20 @@ current_group = [None]
 
 def select_set_all(event):
     # print(c.itemconfig(c.find_all()[0]))
+    if current_name[0] != combo_name.get():
+        if c.find_withtag(current_name[0]) != () and \
+                isinstance(c.find_withtag(current_name[0])[0], int):
+            item = c.find_withtag(current_name[0])
+            c.addtag_withtag('name_' + combo_name.get(), item)
+            current_name[0] = combo_name.get()
+        else:
+            item = c.find_withtag('name_' + current_name[0])
+            c.dtag(item, 'name_' + current_name[0])
+            c.addtag_withtag('name_' + combo_name.get(), item)
+            current_name[0] = combo_name.get()
 
-    if txt_group.get() != '' and txt_group.get() not in treeview.get_children() and not txt_group.get().isnumeric():
+    if (txt_group.get() != '' and txt_group.get() not in treeview.get_children()
+            and not txt_group.get().isnumeric()):
         current_group[0] = txt_group.get()
         treeview.insert('', END, current_group, text=current_group)
         txt_group.delete(0, END)
@@ -296,7 +315,7 @@ main.title('NotPaint')
 main.iconbitmap('./icons/window_ico.ico')
 main.configure(bg='#ffd1dc')
 
-left_frame = Frame(main)
+left_frame = Frame(main, bg="white")
 left_frame.pack(side=LEFT, expand=1, fill=BOTH)
 
 canvas_width = 1130
@@ -304,8 +323,9 @@ canvas_height = 750
 # canvas_color = '#b8bfc2'
 canvas_color = '#b8bfc2'
 c = Canvas(left_frame, bg=canvas_color, borderwidth=0,
-           highlightthickness=0)
-c.pack(expand=1, fill=BOTH)
+           highlightthickness=0, width=400, height=400)
+c.pack(side=LEFT, anchor='nw')
+# c.pack(expand=1, fill=BOTH)
 
 remove_icon = PhotoImage(file='./icons/remove.png')
 up_icon = PhotoImage(file='./icons/up_layer.png')
@@ -325,43 +345,76 @@ c.bind("<Button-3>", context_menu)
 f_top = Frame(main, bg='#ffd1dc')
 f_top.pack(side=TOP)
 
-lb_width = Label(f_top, text='Border width', bg='#ffd1dc',
-                 font='Helvetica 10 bold')
+#
+#   BUG КОГДА ДОБАВЛЯЮ В ГРУПППУ ЕЛЕМЕНТ А У НЕГО УЖЕ ЕСТЬ ГРУППА
+#
+
+current_name = [0]
+
+
+def combo_name_render(event):
+    temp = []
+    bln = True
+    combo_name['values'] = []
+    for i in c.find_all():
+        for t in c.gettags(i):
+            tag_name = t.split('_')
+            if tag_name[0] == 'name':
+                temp += [tag_name[1]]
+                bln = False
+        if bln:
+            temp += [str(i)]
+        bln = True
+    combo_name['values'] = temp
+
+
+def combo_name_get_current(event):
+    current_name[0] = combo_name.get()
+
+
+# Combobox for names
+lb_name = Label(f_top, text='Shape', bg='#ffd1dc', font='Helvetica 10 bold')
+lb_name.pack(expand=1, fill=X)
+combo_name = Combobox(f_top, font='Helvetica 10')
+combo_name.pack(expand=1, fill=X, pady=5)
+combo_name.bind('<Button-1>', combo_name_render)
+combo_name.bind('<<ComboboxSelected>>', combo_name_get_current)
+
+# Tools
+lb_width = Label(f_top, text='Border', bg='#ffd1dc', font='Helvetica 10 bold')
 lb_width.pack(expand=1, fill=X)
-txt_width = Entry(f_top, justify=CENTER, relief=GROOVE, font='Helvetica 10')
+txt_width = ttk.Entry(f_top, justify=CENTER, font='Helvetica 10')
 txt_width.pack(expand=1, fill=X, pady=5)
 
 lb_opacity = Label(f_top, text='Opacity', bg='#ffd1dc',
                    font='Helvetica 10 bold')
 lb_opacity.pack(expand=1, fill=X)
-txt_opacity = Entry(f_top, justify=CENTER, relief=GROOVE, font='Helvetica 10')
+txt_opacity = ttk.Entry(f_top, justify=CENTER, font='Helvetica 10')
 txt_opacity.pack(expand=1, fill=X, pady=5)
 
 lb_color = Label(f_top, text='Color', bg='#ffd1dc', font='Helvetica 10 bold')
 lb_color.pack(expand=1, fill=X)
-txt_color = Entry(f_top, justify=CENTER, relief=GROOVE, font='Helvetica 10')
+txt_color = ttk.Entry(f_top, justify=CENTER, font='Helvetica 10')
 txt_color.pack(expand=1, fill=X, pady=5)
 
 lb_shape_width = Label(f_top, text='Width', bg='#ffd1dc',
                        font='Helvetica 10 bold')
 lb_shape_width.pack(expand=1, fill=X)
-txt_shape_width = Entry(f_top, justify=CENTER, relief=GROOVE,
-                        font='Helvetica 10')
+txt_shape_width = ttk.Entry(f_top, justify=CENTER, font='Helvetica 10')
 txt_shape_width.pack(expand=1, fill=X, pady=5)
 
 lb_shape_height = Label(f_top, text='Heigth', bg='#ffd1dc',
                         font='Helvetica 10 bold')
 lb_shape_height.pack(expand=1, fill=X)
-txt_shape_height = Entry(f_top, justify=CENTER, relief=GROOVE,
-                         font='Helvetica 10')
+txt_shape_height = ttk.Entry(f_top, justify=CENTER, font='Helvetica 10')
 txt_shape_height.pack(expand=1, fill=X, pady=5)
 
-# Tree View
+# Tree View for groups
 lb_group = Label(f_top, text='New group', bg='#ffd1dc',
                  font='Helvetica 10 bold')
 lb_group.pack(expand=1, fill=X)
 
-txt_group = Entry(f_top, justify=CENTER, relief=GROOVE, font='Helvetica 10')
+txt_group = ttk.Entry(f_top, justify=CENTER, font='Helvetica 10')
 txt_group.pack(expand=1, fill=X)
 treeview = Treeview(f_top)
 treeview.pack(expand=1, fill=X)
